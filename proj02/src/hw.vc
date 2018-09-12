@@ -156,9 +156,11 @@
 \func s3 (P Q : Nat -> \Type) (h : \Pi (x : Nat) -> P x -> Q x) (g : \Sigma (x : Nat) (P x)) : \Sigma (x : Nat) (Q x) =>
     (g.1, h g.1 g.2)
 
+-- !!! Имеется в виду, что либо P(x) не верно, либо Q(x) не верно.
+
 -- s4 : Если для всех x : Nat не верно либо P(x), либо Q(x), то P(3) влечет, что Q(3) не верно.
-\func s4 (P Q : Nat -> \Type) (h : \Sigma (x : Nat) (Either (P x) (Q x)) -> Empty) : P 3 -> Q 3 -> Empty =>
-    \lam x => \lam y => h (3, inl x)
+-- \func s4 (P Q : Nat -> \Type) (h : \Sigma (x : Nat) (Either (P x) (Q x)) -> Empty) : P 3 -> Q 3 -> Empty =>
+--     \lam x => \lam y => h (3, inl x)
 
 -- III. Задания на модули.
 
