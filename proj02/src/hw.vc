@@ -10,35 +10,104 @@
    if False _ e = e
 -}
 
+\func if {A : \Type} (b : Bool) (t e : A) : A \elim b
+    | true => t
+    | false => e
+
 -- 2. Определите || через if.
 
-\func \infixr 2 || (x y : Bool) : Bool => {?}
+\func \infixr 2 || (x y : Bool) : Bool => if x true y
 
 -- 3. Определите возведение в степень и факториал для натуральных чисел.
 
-\func \infixr 8 ^ (x y : Nat) => {?}
+\func \infixr 8 ^ (x y : Nat) : Nat \elim y
+    | 0 => 1
+    | suc y => x ^ y * x
 
-\func fac (x : Nat) => {?}
+\func fac (x : Nat) : Nat \elim x
+    | 0 => 1
+    | suc x => (fac x) * (suc x)
 
 -- 4. Определите mod и gcd.
 
-\func mod (x y : Nat) => {?}
+\func mod (x y : Nat) => \let z => div x y \in x - z * y
 
-\func gcd (x y : Nat) => {?}
+\func modTest1 : mod 10 5 = 0       => idp
+\func modTest2 : mod 10 2 = 0       => idp
+\func modTest3 : mod 10 1 = 0       => idp
+\func modTest4 : mod 10 20 = 10     => idp
+\func modTest5 : mod 10 6 = 4       => idp
+\func modTest6 : mod 10 3 = 1       => idp
+\func modTest7 : mod 100 0 = 100    => idp
+
+\func gcd (x y : Nat) => gcd' x x y
+    \where
+    \func gcd' (s x y : Nat) : Nat \elim s
+        | 0 => 0
+        | suc s => if (y < 1) x (gcd' s y (mod x y))
+
+\func gcdTest1 : gcd 10 5 = 5       => idp
+\func gcdTest2 : gcd 10 2 = 2       => idp
+\func gcdTest3 : gcd 10 1 = 1       => idp
+\func gcdTest4 : gcd 10 15 = 5      => idp
+\func gcdTest5 : gcd 10 6 = 2       => idp
+\func gcdTest6 : gcd 100 0 = 100    => idp
+\func gcdTest7 : gcd 19 10 = 1      => idp
 
 -- 5. Определите (полиморфный) reverse для списков.
 
+\func reverse {A : \Type} (xs : List A) : List A
+    | nil => nil
+    | cons x xs => (reverse xs) ++ (cons x nil)
+
+\func reverseTest1 : reverse {Bool} nil = nil => idp
+\func reverseTest2 : reverse (cons 1 nil) = (cons 1 nil) => idp
+\func reverseTest3 : reverse (cons 1 (cons 2 nil)) = (cons 2 (cons 1 nil)) => idp
+
 -- 6. Реализуйте любой алгоритм сортировки. Функцию сравнения можно принимать в качестве аргумента.
+
+\func insert {A : \Type} (f : A -> A -> Bool) (x : A) (ys : List A) : List A \elim ys
+    | nil => cons x nil
+    | cons y ys => if (f x y)
+                    (cons x (cons y ys))
+                    (cons y (insert f x ys))
+
+\func insertionSort {A : \Type} (f : A -> A -> Bool) (xs : List A) : List A \elim xs
+    | nil => nil
+    | cons x xs => insert f x (insertionSort f xs)
+
+\func insertionSortTest1 : insertionSort {Nat} (<) nil = nil => idp
+\func insertionSortTest2 : insertionSort (<) (cons 1 nil) = (cons 1 nil) => idp
+\func insertionSortTest3 : insertionSort (<) (cons 2 (cons 1 nil)) = (cons 1 (cons 2 nil)) => idp
+\func insertionSortTest4 : insertionSort (<) (cons 2 (cons 1 (cons 3 nil))) = (cons 1 (cons 2 (cons 3 nil))) => idp
+\func insertionSortTest5 : insertionSort (<) (cons 3 (cons 1 (cons 2 nil))) = (cons 1 (cons 2 (cons 3 nil))) => idp
+\func insertionSortTest6 : insertionSort (<)
+              (cons 3 (cons 1 (cons 2 (cons 1 (cons 2 nil))))) = (cons 1 (cons 1 (cons 2 (cons 2 (cons 3 nil))))) => idp
+\func insertionSortTest7 : insertionSort
+               (\lam x y => not (x < y)) (cons 3 (cons 1 (cons 2 nil))) = (cons 3 (cons 2 (cons 1 nil))) => idp
 
 -- II. Задания на доказательства.
 
 -- 7. Докажите ассоциативность && и ||.
 
-\func &&-assoc (x y z : Bool) : (x && y) && z = x && (y && z) => {?}
+\func &&-assoc (x y z : Bool) : (x && y) && z = x && (y && z) \elim x
+    | true => idp
+    | false => idp
 
-\func ||-assoc (x y z : Bool) : (x || y) || z = x || (y || z) => {?}
+\func ||-assoc (x y z : Bool) : (x || y) || z = x || (y || z) \elim x
+    | true => idp
+    | false => idp
 
 -- 8. Докажите, что fac 3 равен 6 и что fac 2 не равен 3.
+
+\func \infix 6 == (x y : Nat) : Bool \elim x, y
+    | 0, 0 => true
+    | suc _ , 0 => false
+    | 0, suc _ => false
+    | suc x,  suc y => x == y
+
+\func fac3=6 : T (fac 3 == 6) => unit
+\func fac2<>3 : T (fac 2 == 3) -> Empty => absurd
 
 -- 9. Докажите следующие пропозициональные тавтологии.
 
@@ -47,36 +116,53 @@
   | inr B
 
 -- t1 : (P and Q -> R) -> P -> Q -> R
-\func t1 {P Q R : \Type} (f : \Sigma P Q -> R) (p : P) (q : Q) : R => {?}
+\func t1 {P Q R : \Type} (f : \Sigma P Q -> R) (p : P) (q : Q) : R => f (p, q)
 
 -- t2 : (P -> R) -> (Q -> R) -> P or Q -> R
-\func t2 {P Q R : \Type} (f : P -> R) (g : Q -> R) (h : Either P Q) : R => {?}
+\func t2 {P Q R : \Type} (f : P -> R) (g : Q -> R) (h : Either P Q) : R =>
+    \case h \with {
+        | inl p => f p
+        | inr q => g q
+    }
 
 -- t3 : ((P -> Q -> R) -> P) -> (P -> R) -> R
-\func t3 {P Q R : \Type} (f : (P -> Q -> R) -> P) (g : P -> R) : R => {?}
+\func t3 {P Q R : \Type} (f : (P -> Q -> R) -> P) (g : P -> R) : R => g (f (\lam p q => g p))
 
 -- 10. Сформулируйте и докажите следующие пропозициональные тавтологии.
 
 -- t4 : (P -> Q -> R) -> P and Q -> R
+\func t4 {P Q R : \Type} (f : P -> Q -> R) (g : \Sigma P Q) : R => f g.1 g.2
+
 -- t5 : (P or Q -> P and Q) -> (P -> Q) and (Q -> P)
+\func t5 {P Q R : \Type} (f : Either P Q -> \Sigma P Q) : \Sigma (P -> Q) (Q -> P) =>
+    (\lam p => (f (inl p)).2, \lam q => (f (inr q)).1)
+
 -- t6 : ((((P -> Q) -> P) -> P) -> Q) -> Q
+\func t6 {P Q : \Type } (f : (((P -> Q) -> P) -> P) -> Q) : Q =>
+    f (\lam g => g (\lam x => f (\lam y => x)))
 
 -- 11. Докажите следующие утверждения.
 
 -- s1 : Если для любого x : Nat верно P(x), то существует x : Nat для которого P(x) верно.
-\func s1 (P : Nat -> \Type) (h : \Pi (x : Nat) -> P x) : \Sigma (x : Nat) (P x) => {?}
+\func s1 (P : Nat -> \Type) (h : \Pi (x : Nat) -> P x) : \Sigma (x : Nat) (P x) => (0, h 0)
 
 -- s2 : Если не существует x : Nat такого, что верно P(x), то P(3) не верно.
-\func s2 (P : Nat -> \Type) (h : \Sigma (x : Nat) (P x) -> Empty) : P 3 -> Empty => {?}
+\func s2 (P : Nat -> \Type) (h : \Sigma (x : Nat) (P x) -> Empty) : P 3 -> Empty => \lam x => h (3, x)
 
 -- 12. Сформулируйте и докажите следующие утверждения.
 
 -- s3 : Если для всех x : Nat верно, что P(x) влечет Q(x), и существует x : Nat для которого верно P(x), то существует x : Nat для которого верно Q(x).
 
+\func s3 (P Q : Nat -> \Type) (h : \Pi (x : Nat) -> P x -> Q x) (g : \Sigma (x : Nat) (P x)) : \Sigma (x : Nat) (Q x) =>
+    (g.1, h g.1 g.2)
+
 -- s4 : Если для всех x : Nat не верно либо P(x), либо Q(x), то P(3) влечет, что Q(3) не верно.
+\func s4 (P Q : Nat -> \Type) (h : \Sigma (x : Nat) (Either (P x) (Q x)) -> Empty) : P 3 -> Q 3 -> Empty =>
+    \lam x => \lam y => h (3, inl x)
 
 -- III. Задания на модули.
 
 -- 13. Чему равно fileTest (в нормальной форме)? Докажите это.
+
 
 -- 14. Чему равно M5.t''' (в нормальной форме)? Докажите это.
