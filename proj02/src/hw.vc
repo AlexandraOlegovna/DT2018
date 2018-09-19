@@ -162,9 +162,16 @@
 -- \func s4 (P Q : Nat -> \Type) (h : \Sigma (x : Nat) (Either (P x) (Q x)) -> Empty) : P 3 -> Q 3 -> Empty =>
 --     \lam x => \lam y => h (3, inl x)
 
+\func s4 (P Q : Nat -> \Type) (h : \Pi (x : Nat) -> (Either (P x -> Empty) (Q x -> Empty))) : P 3 -> Q 3 -> Empty =>
+    \lam x => \lam y => \case (h 3) \with {
+        | inl f => f x
+        | inr g => g y
+}
+
 -- III. Задания на модули.
 
 -- 13. Чему равно fileTest (в нормальной форме)? Докажите это.
-
+\func fileTesttest : fileTest = (17, 8, 13, 55, 18, 21) => idp
 
 -- 14. Чему равно M5.t''' (в нормальной форме)? Докажите это.
+\func M5t'''test : M5.t''' = ((82, 42, 61, 82, 34, 42, 61, 29), 25, (42, 29)) => idp
