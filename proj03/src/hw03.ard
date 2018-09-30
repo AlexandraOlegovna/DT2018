@@ -43,12 +43,57 @@
 
 -- 4. Реализуйте аналоги функции replicate для vec и Vec (эта функция создает список заданной длины, состоящий из повторений данного элемента).
 
+\func replicate1 {A : \Type} (x : A) (n : Nat) : vec A n \elim n
+  | 0 => ()
+  | suc n => (x, replicate1 x n)
+
+
+\func replicate2 {A : \Type} (x : A) (n : Nat) : Vec A n \elim n
+  | 0 => fnil
+  | suc n => fcons x (replicate2 x n)
+
 -- 5. Реализуйте аналоги функции map для vec и Vec.
+
+\func map1 {A B : \Type} {n : Nat} (f : A -> B) (xs : vec A n) : vec B n \elim n, xs
+  | 0, _ => ()
+  | suc n, (x, xs) => (f x, map1 f xs)
+
+
+\func map2 {A B : \Type} {n : Nat} (f : A -> B) (xs : Vec A n) : Vec B n \elim n, xs
+  | 0, fnil => fnil
+  | suc _, fcons x xs => fcons (f x) (map2 f xs)
 
 -- 6. Реализуйте аналоги функции zipWith для vec и Vec.
 --    Функция должна принимать вектора одинаковой длины.
 
+\func zipWith1 {A B C : \Type} {n : Nat} (f : A -> B -> C) (xs : vec A n) (ys : vec B n) : vec C n \elim n, xs, ys
+  | 0, _, _ => ()
+  | suc n, (x, xs), (y, ys) => (f x y, zipWith1 f xs ys)
+
+
+\func zipWith2 {A B C : \Type} {n : Nat} (f : A -> B -> C) (xs : Vec A n) (ys : Vec B n) : Vec C n \elim n, xs, ys
+  | 0, _, _ => fnil
+  | suc _, fcons x xs, fcons y ys => fcons (f x y) (zipWith2 f xs ys)
+
 -- 7. Реализуйте Fin как рекурсивную функцию.
+
+\data Empty
+
+\data NAT (A : \Type)
+    | S A | Z
+
+\func fin (n : Nat) : \Type \elim  n
+    | zero  => Empty
+    | suc n => NAT (fin n)
+
+\func fin0 : fin 3 => Z
+\func fin1 : fin 3 => S Z
+\func fin2 : fin 3 => S (S Z)
+
+\func fin' (n : Nat) : \Type \elim  n
+    | zero  => Empty
+    | suc zero => Empty
+    | suc n => Empty
 
 -- 8. Функции Fin n → A соответствуют спискам элементов A длины n.
 --    Функция, преобразующая Vec A n в Fin n → A, была реализована на лекции.
