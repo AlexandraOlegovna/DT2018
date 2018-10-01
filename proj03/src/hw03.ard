@@ -90,32 +90,47 @@
 \func fin1 : fin 3 => S Z
 \func fin2 : fin 3 => S (S Z)
 
-\func fin' (n : Nat) : \Type \elim  n
-    | zero  => Empty
-    | suc zero => Empty
-    | suc n => Empty
-
 -- 8. Функции Fin n → A соответствуют спискам элементов A длины n.
 --    Функция, преобразующая Vec A n в Fin n → A, была реализована на лекции.
 --    Реализуйте обратную функцию.
 
-\func coin {A : \Type} {n : Nat} (f : Fin n -> A) : Vec A n => {?}
+\func coin {A : \Type} {n : Nat} (f : Fin n -> A) : Vec A n \elim n
+    | 0 => fnil
+    | suc _ => fcons (f fzero) (coin (\lam fin' => f (fsuc fin')))
 
 -- 9. Определите тип матриц и ряд функций над ними.
 
-\func Mat (A : \Type) (n m : Nat) : \Type => {?}
+\func Mat (A : \Type) (n m : Nat) : \Type => Vec (Vec A m) n
 
 -- диагональная матрица с элементами e на диагонали и z на остальных позициях.
 
-\func diag {A : \Type} (z e : A) (n : Nat) : Mat A n n => {?}
+\func \infix 6 == (x y : Nat) : Bool \elim x, y
+    | 0, 0 => true
+    | suc _ , 0 => false
+    | 0, suc _ => false
+    | suc x,  suc y => x == y
+
+
+\func row {A : \Type} (z e : A) (n k : Nat) : Vec A n \elim n
+    | 0 => fnil
+    | suc n => \let tail => row z e n k \in if ((suc n) == k) ((fcons e) tail) ((fcons) z tail)
+
+\func diag {A : \Type} (z e : A) (n : Nat) : Mat A n n => helper z e n n
+    \where \func helper {A : \Type} (z e : A) (n m : Nat) : Mat A m n \elim m
+    | 0 => fnil
+    | suc x => fcons (row z e n x) (helper z e n x)
 
 -- транспонирование матриц
 
-\func transpose {A : \Type} {n m : Nat} (M : Mat A n m) : Mat A m n => {?}
+\func transpose {A : \Type} {n m : Nat} (M : Mat A n m) : Mat A m n \elim n, m
+    | 0, m => replicate2 fnil m
+    | _, 0 => fnil
+    | suc _, suc m => fcons (map2 Head M) (transpose (map2 Tail M))
 
 -- сложение матриц
 
-\func matAdd {A : \Type} (add : A -> A -> A) (n m : Nat) (M N : Mat A n m) : Mat A n m => {?}
+\func matAdd {A : \Type} (add : A -> A -> A) (n m : Nat) (M N : Mat A n m) : Mat A n m =>
+    zipWith2 (zipWith2 add) M N
 
 -- умножение матриц
 
@@ -126,7 +141,9 @@
 --     Высота листа равна 0.
 --     Любое такое бинарное дерево будет полным.
 
-\data CTree (A : \Type) (n : Nat)
+\data CTree (A : \Type) (n : Nat) \elim n
+    | 0 => leaf
+    | suc n => node A (CTree A n) (CTree A n)
 
 -- 11. Определите тип Tree A n бинарных деревьев высоты не больше n, которые хранят элементы только во внутренних узлах, но не в листьях.
 --     Высота листа равна 0.
