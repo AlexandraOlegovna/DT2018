@@ -88,7 +88,12 @@
   | 0 => 1
   | suc n => suc n * fac n
 
-\func fac/=suc (p : fac = suc) : Empty => {?}
+\data TT (b : Nat) \with
+  | 1 => ttt
+
+\func absurd' (t : TT 2) : Empty
+
+\func fac/=suc (p : fac = suc) : Empty => absurd' (transport TT (pmap (\lam x => x 1) p) ttt)
 
 -- 6. У оператора J есть другая форма, которую мы будем называть Jalt. Докажите, что J и Jalt эквивалентны, то есть выразите одно через другое и наоборот.
 
