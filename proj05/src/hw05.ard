@@ -1,0 +1,94 @@
+\import lect05
+\open Nat
+
+-- 1. Докажите дистрибутивность умножения над сложением для натуральных чисел.
+
+\func ldistr (n m k : Nat) : n * (m + k) = n * m + n * k \elim k
+    | 0 => idp
+    | suc k => (pmap (\lam x => x + n) (ldistr n m k)) *> (+-assoc (n * m) (n * k) n)
+
+
+\func *-comm (n m : Nat) : n * m = m * n
+  | 0, 0 => idp
+  | 0, suc m => *-comm 0 m
+  | suc n, 0 => *-comm n 0
+  | suc n, suc m =>
+  pmap suc ((pmap (\lam x => x + n) (*-comm (suc n) m)) *>
+  pmap (\lam x => x + m + n) (sym (*-comm n m)) *>
+  +-assoc (n * m) m n *>
+  pmap (\lam x => n * m + x) (+-comm m n) *>
+  sym (+-assoc (n * m) n m) *>
+  (pmap (\lam x => x + m) (*-comm n (suc m)))
+  )
+
+\func rdistr (n m k : Nat) : (m + k) * n = m * n + k * n =>
+    *-comm (m + k) n *>
+    ldistr n m k *>
+    pmap (\lam x => x + n * k) (*-comm n m) *>
+    pmap (\lam x => m * n + x) (*-comm n k)
+
+-- 2. Докажите, что reverse (reverse xs) = xs, где reverse определен через ++.
+
+\data List (A : \Type) | nil | cons A (List A)
+
+\func \infixl 4 ++ {A : \Type} (xs ys : List A) : List A \elim xs
+  | nil => ys
+  | cons x xs => cons x (xs ++ ys)
+
+\func reverse {A : \Type} (xs : List A) : List A
+  | nil => nil
+  | cons x xs => reverse xs ++ cons x nil
+
+
+\func ++nil {A : \Type} (xs : List A) : xs ++ nil = xs \elim xs
+    | nil => idp
+    | cons x xs => pmap (\lam y => cons x y) (++nil xs)
+
+
+-- Это утверждение будет полезно для доказательства.
+
+\func ++-accos {A : \Type} (xs ys zs : List A) : (xs ++ ys) ++ zs = xs ++ (ys ++ zs) \elim xs
+    | nil => idp
+    | cons x xs => pmap (\lam a => cons x a) (++-accos xs ys zs)
+
+
+\func reverse++ {A : \Type} (xs ys : List A) : reverse (xs ++ ys) = reverse ys ++ reverse xs \elim xs, ys
+    | nil, nil => idp
+    | xs, nil => pmap (\lam x => reverse x) (++nil xs)
+    | nil, ys => sym (++nil (reverse ys))
+    | cons x xs, cons y ys =>
+        pmap (\lam y => y ++ cons x nil) (reverse++ xs (cons y ys)) *>
+        ++-accos (reverse ys ++ cons y nil) (reverse xs) (cons x nil)
+
+
+\func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs => {?}
+
+-- 3. Докажите, что vnil является нейтральным элементом для v++.
+
+\func vnil-rightId {A : \Type} {n : Nat} (xs : Vec A n) : transport (Vec A) (+-comm 0 n) (xs v++ vnil) = xs => {?}
+
+-- 4. Докажите, что 0 не равно suc x.
+
+\func zero/=suc (x : Nat) (p : 0 = suc x) : Empty => {?}
+
+-- 5. Докажите, что fac не равен suc.
+
+\func fac (n : Nat) : Nat
+  | 0 => 1
+  | suc n => suc n * fac n
+
+\func fac/=suc (p : fac = suc) : Empty => {?}
+
+-- 6. У оператора J есть другая форма, которую мы будем называть Jalt. Докажите, что J и Jalt эквивалентны, то есть выразите одно через другое и наоборот.
+
+-- Выразите Jalt через J. Можно пользоваться только J, idp и всем, что через них выражается.
+
+\func Jalt {A : \Type} (B : \Pi (a a' : A) -> a = a' -> \Type)
+    (b : \Pi (a : A) -> B a a idp)
+    {a a' : A} (p : a = a') : B a a' p => {?}
+
+-- Выразите J через Jalt. Можно пользоваться только Jalt, idp и всем, что через них выражается.
+
+\func J' {A : \Type} {a : A} (B : \Pi (a' : A) -> a = a' -> \Type)
+    (b : B a idp)
+    {a' : A} (p : a = a') : B a' p => {?}
