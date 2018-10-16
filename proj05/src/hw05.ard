@@ -61,7 +61,11 @@
         ++-accos (reverse ys ++ cons y nil) (reverse xs) (cons x nil)
 
 
-\func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs => {?}
+\func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs \elim xs
+    | nil => idp
+    | cons x xs =>
+        reverse++ (reverse xs) (cons x nil) *>
+        pmap (\lam a => cons x a) (reverse-isInvolutive xs)
 
 -- 3. Докажите, что vnil является нейтральным элементом для v++.
 
@@ -69,7 +73,14 @@
 
 -- 4. Докажите, что 0 не равно suc x.
 
-\func zero/=suc (x : Nat) (p : 0 = suc x) : Empty => {?}
+\data Empty
+
+\data T (b : Nat) \with
+  | 0 => tt
+
+\func absurd {x : Nat} (t : T (suc x)) : Empty
+
+\func zero/=suc (x : Nat) (p : 0 = suc x) : Empty => absurd (transport T p tt)
 
 -- 5. Докажите, что fac не равен suc.
 
