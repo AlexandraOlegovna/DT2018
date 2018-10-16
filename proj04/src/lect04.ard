@@ -34,25 +34,62 @@
 
 -- 2. Определение Tree.
 
--- 3. Строго положительные определения \data.
 
--- 4. Симметричность, транзитивность, принцип Лейбница, pmap через него.
-
+-- idp
 \func idp {A : \Type} {a : A} : a = a => path (\lam _ => a)
 
-\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' => coe (\lam i => B (p @ i)) b right
+-- принцип лейбница
+\func Leibneiz {A : \Type} {a a' : A} (f : \Pi (P : A -> \Type) -> \Sigma (P a -> P a') (P a' -> P a)) : a = a'
+    => (f (\lam x => a = x)).1 idp
 
--- 5. Коммутативность сложения.
+-- обратный принцип лейбница
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a'
+    => coe (\lam i => B (p @ i)) b right
+-- B' : I -> \Type
+-- B' left == B a
+-- B' right == B a'
 
-\func +-comm (n m : Nat) : n + m = m + n => {?}
+-- симметричность равенства
+\func sym {A : \Type} {a a' : A} (p : a = a') : a' = a
+    => transport (\lam x => x = a) p idp
 
--- 6. Equational reasoning, коммутивность сложения через него.
 
-\func \infix 2 qed {A : \Type} (a : A) : a = a => idp
+-- транзитивность равенства
+\func trans {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
+    => transport (\lam x => a = x) q p
 
-\func \infixr 1 >== {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') => {?}
+-- конгруэнтность равенства
+\func pmap {A B : \Type} {f : A -> B} {a a' : A} (p : a = a') : f a = f a'
+    => path (\lam i => f (p @ i))
+-- path (f : I -> A) : f left = f right
+-- A (p : a = a') (i : I) : A
+-- p : I -> A
+-- f : A -> B
 
-\func \infix 2 ==< {A : \Type} (a : A) {a' : A} (p : a = a') => p
+\func pmap' {A B : \Type} {f : A -> B} {a a' : A} (p : a = a') : f a = f a'
+    => transport (\lam x => f a = f x) p idp
+
+-- TODO ???
+--\func pmap-idp {A : \Type} {a a' : A} (p : a = a') : pmap {A} (\lam x => x) p = p => idp
+
+-- функциональная экстенсиональность (две функции, равные поточечно, равны)
+-- f, g : \Pi (a : A) -> B a
+-- p : \Pi (a : A) -> f a = g a
+-- ? : f = g
+
+-- p : \Pi (a : A) -> I -> B a
+-- ? : I -> \Pi (a : A) -> B a
+-- i = left  => \lam a => p a @ left  => (\lam a => f a) => f
+-- i = right => \lam a => p a @ right => (\lam a => g a) => g
+\func funExt {A : \Type} {B : A -> \Type} {a : A} (f g : \Pi (a : A) -> B a) (p : \Pi (a : A) -> f a = g a) : f = g
+    => path (\lam i => \lam a => p a @ i)
+
+-- равенство left и right
+\func left=i (i : I) : left = i
+    => coe (\lam i => left = i) idp i
+
+-- коммутативность сложения
+\func  +-comm (n m : Nat) : n + m = m + n => {?}
 
 -- 7. Ассоциативность ++ для векторов.
 
@@ -63,9 +100,3 @@
 \func \infixl 4 v++ {A : \Type} {n m : Nat} (xs : Vec A n) (ys : Vec A m) : Vec A (m + n) \elim n, xs
   | 0, vnil => ys
   | suc n, vcons x xs => vcons x (xs v++ ys)
-
--- \func v++-assoc {A : \Type} {n m k : Nat} (xs : Vec A n) (ys : Vec A m) (zs : Vec A k) : (xs v++ ys) v++ zs = xs v++ (ys v++ zs) => {?}
-
--- 8. Доказательства неравенств.
-
-\func true/=false (p : true = false) : Empty => {?}
