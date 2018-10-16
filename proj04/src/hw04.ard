@@ -12,11 +12,19 @@
 -- repl говорит, что если у нас есть два равных типа, то у нас есть функция из одного во второй.
 -- Определите repl через transport.
 
-\func repl {A B : \Type} (p : A = B) (a : A) : B => {?}
+--\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a'
+--    => coe (\lam i => B (p @ i)) b right
+
+\func repl {A B : \Type} (p : A = B) (a : A) : B =>
+    transport (\lam x => x) p a
 
 -- Определите transport через repl и pmap.
 
-\func transport' {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' => {?}
+--\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a'
+--    => path (\lam i => f (p @ i))
+
+\func transport' {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) : B a' =>
+    repl (pmap (\lam x => B x) p) b
 
 -- В заданиях 3-6 нельзя использовать не только coe, но и все функции, определенные через него, в частнсоти transport.
 
@@ -48,7 +56,11 @@
 
 -- 8. Определите функцию B right -> B left.
 
-\func Itr' {B : I -> \Type} (b : B right) : B left => {?}
+\func right=left : right = left =>
+    sym left=right
+
+\func Itr' {B : I -> \Type} (b : B right) : B left =>
+    transport (\lam x => B x) right=left b
 
 -- 9. Докажите, что (\lam x => not (not x)) = (\lam x => x).
 
@@ -56,4 +68,15 @@
   | true => false
   | false => true
 
-\func notNotId : (\lam x => not (not x)) = (\lam x => x) => {?}
+\func notNot (x : Bool) : not (not x) = x \elim x
+  | true => idp
+  | false => idp
+
+-- i = left  => \lam x => ((not (not x)) = x) @ left  => \lam x => ((not (not x))
+-- i = right  => \lam x => ((not (not x)) = x) @ right  => \lam x => x
+
+--\func funExt {A : \Type} (B : A -> \Type) {f g : \Pi (a : A) -> B a} (p : \Pi (a : A) -> f a = g a) : f = g
+--    => path (\lam i => \lam a => p a @ i)
+
+\func notNotId : (\lam x => not (not x)) = (\lam x => x) =>
+    funExt {Bool} (\lam _ => Bool) {\lam x => not (not x)} {\lam x => x} notNot
