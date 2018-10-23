@@ -1,0 +1,85 @@
+\import lect06
+
+-- 1. Определите функцию swap при помощи \cowith, swap' при помощи паттерн матчинг и swap'' при помощи \new.
+
+\func swap {A B : \Type} (p : Pair A B) : Pair B A \cowith | fst_ => p.snd_ | snd_ => p.fst_
+
+\func swap' {A B : \Type} (p : Pair A B) : Pair B A \elim p
+    | (aa, bb, a, b) => \new Pair { | A => bb | B => aa | fst_ => b | snd_ => a }
+
+\func swap'' {A B : \Type} (p : Pair A B) : Pair B A => \new Pair { | fst_ => p.snd_ | snd_ => p.fst_ }
+
+-- 2. Докажите, что swap (swap p) = p.
+
+\func swap-involutive {A B : \Type} (p : Pair A B) : swap (swap p) = p => idp
+
+-- 3. Докажите, что тип PosNat 0 пустой, а тип PosNat 1 нет.
+
+\data Empty
+
+\data Bool | true | false
+
+\data T (b : Bool) \with
+  | true => tt
+
+\func isPos (n : Nat) : Bool
+  | 0 => false
+  | suc _ => true
+
+\record PosNat (n : Nat) (p : T (isPos n))
+
+\func absurd (t : T false) : Empty
+
+--\func zero-isNotPos (p : PosNat 0) : Empty \elim p
+--    | (n, p) => absurd p
+--\func zero-isNotPos (p : PosNat 0) : Empty => absurd p {p}
+\func zero-isNotPos (p : PosNat 0) : Empty => absurd p.p
+
+\func one-isPos : PosNat 1 => \new PosNat { | n => 1 | p => tt }
+
+-- 4. Определите \record, состоящий из пар взаимно простых натуральных чисел.
+--    Определите тип, состоящий из натуральных чисел, взаимно простых с 60.
+
+\func if (x : Bool) (t e : Nat) : Nat \elim x
+  | true => t
+  | false => e
+
+\func \infix 4 < (x y : Nat) : Bool
+  | 0, 0 => false
+  | 0, suc y => true
+  | suc x, 0 => false
+  | suc x, suc y => x < y
+
+\func \infixl 6 - (x y : Nat) : Nat
+  | 0, _ => 0
+  | suc x, 0 => suc x
+  | suc x, suc y => x - y
+
+\func div (x y : Nat) => div' x x y
+  \where
+    \func div' (s x y : Nat) : Nat \elim s
+        | 0 => 0
+        | suc s => if (x < y) 0 (suc (div' s (x - y) y))
+
+\func mod (x y : Nat) => \let z => div x y \in x - z * y
+
+\func gcd (x y : Nat) => gcd' x x y
+    \where
+    \func gcd' (s x y : Nat) : Nat \elim s
+        | 0 => 0
+        | suc s => if (y < 1) x (gcd' s y (mod x y))
+
+\func \infix 2 == (x y : Nat) : Bool \elim x, y
+    | 0, 0 => true
+    | suc x, suc y => == x y
+    | _, _ => false
+
+\record arePrime (x y : Nat) (p : T (gcd x y == 1))
+
+\func arePrimePartial => arePrime { | x => 60 }
+
+-- 5. Определите класс монад, который наследует класс функторов. Определите \instance этого класса для Maybe.
+
+\data Maybe (A : \Type) | nothing | just A
+
+-- 6. Задание отменено.
