@@ -46,6 +46,27 @@
             | nil => Empty
             | cons _ _ => Unit }) p unit
 
+\func head {A : \Type} (xs : List A) (default : A) : A \elim xs
+  | nil => default
+  | cons x _ => x
+
+\func flip {A B C : \Type } (f : A -> B -> C) (b : B) (a : A) => f a b
+
+\func tail {A : \Type} (xs : List A) : List A
+  | nil => nil
+  | cons _ xs => xs
+
+\func absurd {A : \Type} (e : Empty) : A
+
+\func trans {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
+    => transport (\lam x => a = x) q p
+
+\func helper {A : \Type} {x y : A} {xs ys : List A} (p1 : x = y) (p2 : xs = ys) : cons x xs = cons y ys \elim xs, ys
+  | nil, nil => pmap (flip cons nil) p1
+  | cons a as, cons b bs => trans (pmap (cons x) p2) (pmap (flip cons (cons b bs)) p1)
+  | nil, cons _ _ => absurd ((\lam p => cons/=nil (sym p)) p2)
+  | cons _ _ , nil => absurd (cons/=nil p2)
+
 \instance ListEq {A : \Type} (dec : Eq A) : Eq (List A)
   | decideEq => decideEq
       \where
@@ -54,8 +75,9 @@
               | nil, cons _ _ => no (\lam p => cons/=nil (sym p))
               | cons _ _, nil => no cons/=nil
               | cons x xs, cons y ys => \case dec.decideEq x y, decideEq xs ys \with {
-                | no c, _ => {?}
-                | _, _ => {?}
+                | no c, _ => no (\lam p => c (pmap (flip head x) p))
+                | yes _, no c => no (\lam p => c (pmap tail p))
+                | yes p1, yes p2 => yes (helper p1 p2)
               }
 
 -- 4. Докажите, что предикат isEven разрешим.
