@@ -93,7 +93,7 @@
 \func isEven/=odd {n k : Nat} (p : 2 * n = suc (2 * k)) : Empty \elim n, k
     | 0, 0 => absurd ((\lam p => suc/=0 (sym p)) p)
     | 0, suc _ => absurd ((\lam p => suc/=0 (sym p)) p)
-    | suc x, 0 => absurd (suc/=0 (pmap pred p))
+    | suc _, 0 => absurd (suc/=0 (pmap pred p))
     | suc x, suc y => absurd (isEven/=odd {x} {y} (pmap pred (pmap pred p)))
 
 -- 5. Докажите, что если равенство элементов A разрешимо, то любой список элементов A либо пуст, либо состоит из повторений одного элемента, либо в A существует два различных элемента.
@@ -107,7 +107,16 @@
   | repeated (n : Nat) (a : A) (p : xs = repeat n a)
   | A-is-not-trivial (a a' : A) (p : a = a' -> Empty)
 
-\func lemma {A : \Type} (xs : List A) {dec : DecEq A} : Result A xs => {?}
+\func lemma {A : \Type} (xs : List A) {dec : DecEq A} : Result A xs \elim xs
+  | nil => empty idp
+  | cons x xs => \case lemma xs {dec} \with {
+    | empty p => repeated 1 x (pmap (cons x) p)
+    | repeated n a p1 => \case dec x a \with {
+      | yes p2 => repeated (suc n) a (helper p2 p1)
+      | no c => A-is-not-trivial x a c
+    }
+    | A-is-not-trivial a a' p => A-is-not-trivial a a' p
+  }
 
 -- 6. Определите view, представляющий число в виде частного и остатка от деления его на произвольное (неотрицательное) число m.
 --    Реализуйте функцию деления.
