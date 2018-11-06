@@ -74,7 +74,7 @@
               | nil, nil => yes idp
               | nil, cons _ _ => no (\lam p => cons/=nil (sym p))
               | cons _ _, nil => no cons/=nil
-              | cons x xs, cons y ys => \case dec.decideEq x y, decideEq xs ys \with {
+              | cons x xs, cons y ys => \case dec.decideEq x y, decideEq {A} {dec} xs ys \with {
                 | no c, _ => no (\lam p => c (pmap (flip head x) p))
                 | yes _, no c => no (\lam p => c (pmap tail p))
                 | yes p1, yes p2 => yes (helper p1 p2)
@@ -84,7 +84,17 @@
 
 \func isEven (n : Nat) => \Sigma (k : Nat) (n = 2 * k)
 
-\func isEven-dec : DecPred isEven => {?}
+\func isEven-dec : DecPred isEven => \lam n =>
+    \case parity n \with {
+        | even k p => yes (k, p)
+        | odd k p => no (\lam x => isEven/=odd (trans (sym x.2) p))
+      }
+
+\func isEven/=odd {n k : Nat} (p : 2 * n = suc (2 * k)) : Empty \elim n, k
+    | 0, 0 => absurd ((\lam p => suc/=0 (sym p)) p)
+    | 0, suc _ => absurd ((\lam p => suc/=0 (sym p)) p)
+    | suc x, 0 => absurd (suc/=0 (pmap pred p))
+    | suc x, suc y => absurd (isEven/=odd {x} {y} (pmap pred (pmap pred p)))
 
 -- 5. Докажите, что если равенство элементов A разрешимо, то любой список элементов A либо пуст, либо состоит из повторений одного элемента, либо в A существует два различных элемента.
 
