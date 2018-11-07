@@ -1,4 +1,5 @@
 \import lect08
+\open Nat
 
 -- 1. Укажите явно чему равен уровень в каждом из вызовов id' ниже.
 --    Напишите явно чему равны типы всех функций idTest*.
@@ -19,6 +20,63 @@
     | cons y ys => { | yes (y = a) | no (In {A} a ys) }
 
 -- 3. Докажите эквивалентность пяти различных определений LessOrEq: lessOrEq, LessOrEq, LessOrEq', LessOrEq'' и LessOrEq'''.
+
+\func absurd {A : \Type} (e : Empty) : A
+\func idp {A : \Type} {a : A} => path (\lam _ => a)
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') => path (\lam i => f (p @ i))
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) => coe (\lam i => B (p @ i)) b right
+\func suc/=0 {n : Nat} (p : suc n = 0) : Empty => transport (\lam n => \case n \with { | 0 => Empty | suc _ => Unit }) p unit
+\func pred (n : Nat) : Nat
+  | 0 => 0
+  | suc n => n
+\func \infixr 5 *> {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
+  => transport (\lam x => a = x) q p
+\func sym {A : \Type} {a a' : A} (p : a = a') => transport (\lam x => x = a) p idp
+\func +-comm (n m : Nat) : n + m = m + n
+  | 0, 0 => idp
+  | 0, suc m => pmap suc (+-comm 0 m)
+  | suc n, 0 => pmap suc (+-comm n 0)
+  | suc n, suc m => pmap suc (+-comm (suc n) m *> pmap suc (sym (+-comm n m)) *> +-comm n (suc m))
+
+
+\func lemma {n m : Nat} (p : lessOrEq (suc n) m) : lessOrEq n m \elim n, m
+    | 0, _ => unit
+    | suc _, 0 => p
+    | suc x, suc y => lemma p
+
+\func LessOrEq''->lessOrEq {n m : Nat} (p : LessOrEq'' n m) : lessOrEq n m \elim n, m, p
+    | 0, _, _ => unit
+    | suc _, 0, p => \case p \with { | <=-refl p => absurd (suc/=0 p)}
+    | suc n, suc m, p => \case p \with {
+        | <=-refl p' => LessOrEq''->lessOrEq (<=-refl (pmap pred p'))
+        | <=-step p' => \case LessOrEq''->lessOrEq p' \with {
+            | t => lemma t
+        }
+    }
+
+\func lessOrEq->LessOrEq {n m : Nat} (p : lessOrEq n m) : LessOrEq n m \elim n, m, p
+    | 0, _, _ => z<=n
+    | suc _, 0, ()
+    | suc n, suc m, p => s<=s (lessOrEq->LessOrEq p)
+
+\func LessOrEq->LessOrEq' {n m : Nat} (p : LessOrEq n m) : LessOrEq' n m \elim n, m
+    | 0, m => z<=n' idp
+    | suc n, suc m => \case p \with {| s<=s p' => s<=s' (idp) (idp) (LessOrEq->LessOrEq' p')}
+
+\func lemma1 {k n m n' m' : Nat} (p1 : n = suc n') (p2 : m = suc m') (p3 : k + n' = m') : k + n = m =>
+    pmap (+ k) p1 *> sym (p2 *> sym (pmap suc p3))
+
+\func LessOrEq'->LessOrEq''' {n m : Nat} (p : LessOrEq' n m) : LessOrEq''' n m  \elim p
+    | z<=n' p => (m, pmap (+ m) p)
+    | s<=s' a b p => \let pair => LessOrEq'->LessOrEq''' p \in (pair.1, lemma1 a b pair.2)
+
+\func lemma3 {n m : Nat} : suc (n + m) = suc n + m => sym (sym (+-comm m (suc n)) *> pmap suc (+-comm m n))
+
+\func LessOrEq'''->LessOrEq'' {n m : Nat} (p : LessOrEq''' n m) : LessOrEq'' n m \elim m, p
+    | _, (0, p) => <=-refl (+-comm n 0 *> p)
+    | suc m, (suc k, p)  =>
+        \let p' => pmap pred (lemma3 {k} {n} *> p) \in <=-step (LessOrEq'''->LessOrEq'' (k, p'))
+    | 0, (suc k, p) => absurd (suc/=0 (lemma3 {k} {n} *> p))
 
 -- 4. Определите рефлексивное транзитивное замыкание отношения.
 --    То есть ReflTransClosure R -- это минимальное рефлексивное и транзитивное отношение, содержащее R.
