@@ -1,0 +1,81 @@
+\import lect09
+\open Nat
+
+-- 1. Определите факториал через Nat-rec.
+
+--\func Nat-rec {E : \Type} (z : E) (s : Nat -> E -> E) (n : Nat) : E \elim n
+--  | zero => z
+--  | suc n => s n (Nat-rec z s n)
+
+\func fact (n : Nat) => Nat-rec 1 (\lam x y => (x + 1) * y) n
+
+-- 2. Докажите ассоциативность сложения для натуральных чисел через Nat-elim.
+
+--\func Nat-elim (E : Nat -> \Type) (z : E zero) (s : \Pi (n : Nat) -> E n -> E (suc n)) (n : Nat) : E n \elim n
+--  | zero => z
+--  | suc n => s n (Nat-elim E z s n)
+
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') => path (\lam i => f (p @ i))
+
+\func +-assoc (n m k : Nat) : (n + m) + k = n + (m + k) \elim k
+  | 0 => idp
+  | suc k => pmap suc (Nat-elim (\lam k => n + m + k = n + (m + k)) idp (\lam _ x => pmap suc x) k)
+
+-- 3. Определите через Nat-<-ind либо div, либо toDivDom.
+
+--\func Nat-<-ind (P : Nat -> \Type) (h : \Pi (n : Nat) -> (\Pi (k : Nat) -> T (k < n) -> P k) -> P n) (n : Nat) : P n => {?}
+
+\func div (n k : Nat) : Nat => {?}
+
+\func toDivDom {n k : Nat} (t : T (0 < k)) : divDom n k => {?}
+
+-- 4. Определите элиминатор для D.
+--\data D
+--  | con1 Nat
+--  | con2 D D
+--  | con3 (Nat -> D)
+
+\func D-elim
+  (E : D -> \Type)
+  (z : \Pi (a : Nat) -> E (con1 a))
+  (s1 : \Pi (a : D) -> E a -> \Pi (b : D) -> E b -> E (con2 a b))
+  (s2 : \Pi (f : Nat -> D) -> (\Pi (a : Nat) -> E (f a)) -> E (con3 f))
+  (n : D) : E n \elim n
+  | con1 x => z x
+  | con2 x y => s1 x (D-elim E z s1 s2 x) y (D-elim E z s1 s2 y)
+  | con3 f => s2 f (\lam x => D-elim E z s1 s2 (f x))
+
+-- 5. Определите рекурсор и элиминатор для List.
+
+--\func Maybe-rec {A : \Type} {E : \Type} (n : E) (j : A -> E) (m : Maybe A) : E \elim m
+--  | nothing => n
+--  | just a => j a
+
+\func List-rec
+  {A : \Type}
+  {E : \Type}
+  (n : E)
+  (c : A -> List A -> E -> E )
+  (ls : List A) : E \elim ls
+  | nil => n
+  | cons l ls => c l ls (List-rec n c ls)
+
+--\func Maybe-elim {A : \Type} (E : Maybe A -> \Type) (n : E nothing) (j : \Pi (a : A) -> E (just a)) (m : Maybe A) : E m \elim m
+--  | nothing => n
+--  | just a => j a
+
+\func List-elim
+  {A : \Type}
+  (E : List A -> \Type)
+  (n : E nil)
+  (c : \Pi (a : A) -> \Pi (as : List A) -> E as -> E (cons a as))
+  (ls : List A) : E ls \elim ls
+  | nil => n
+  | cons l ls => c l ls (List-elim E n c ls)
+
+
+
+-- 6. Докажите принцип индукции для натуральных чисел, позволяющий использовать индукционную гипотезу для любого меньшего числа.
+--    Hint: Прежде, чем доказывать утверждение по индукции, его можно обобщить.
+
+\func Nat-<-ind (P : Nat -> \Type) (h : \Pi (n : Nat) -> (\Pi (k : Nat) -> T (k < n) -> P k) -> P n) (n : Nat) : P n => {?}
