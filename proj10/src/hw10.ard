@@ -1,0 +1,47 @@
+\import lect10
+
+-- 1. Определите функцию sscanf.
+
+-- 2. Определите тип бинарных сортированных деревьев.
+--    То есть таких деревьев, в которых для любого узла верно, что все элементы в левом поддереве меньше либо равны, чем значение в узле, которое меньше либо равно, чем все элементы в правом поддереве.
+
+-- 3. Реализуйте функцию сортировки, возвращающую SortedList.
+
+
+--\func insert {A : TotalPoset} (x : A) (ys : SortedList A) : SortedList A \elim ys
+--  | snil => scons x snil nilL
+--  | scons y ys h => \case totality x y \with {
+--    | inl true => scons x (scons y ys h) (consL true : HeadL x (scons y ys h))
+--    | inr false => \case ys \with {
+--      | snil => scons y (scons x snil nilL) (consL false : HeadL y (scons x snil nilL))
+--      | scons y' ys' h' => scons y (insert x (scons y' ys' h')) {?} -- termination check error
+--    }
+--  }
+
+\func insert'' {A : TotalPoset} (x : A) (ys : SortedList A) : SortedList A \elim ys
+  | snil => scons x snil nilL
+  | scons y snil h => \case totality x y \with {
+    | inl true => \let list => (scons y snil h) \in scons x list (consL {A} true : HeadL {A} x list)
+    | inr false => \let list => (scons x snil nilL) \in scons y list (consL {A} false : HeadL {A} y list)
+  }
+  | scons y (scons y' ys' h') h => \case totality x y \with {
+    | inl true => \let list => scons y (scons y' ys' h') h \in scons x list (consL {A} true : HeadL {A} x list)
+    | inr false => \let list => insert'' x (scons y' ys' h') \in scons y list {?}
+    -- todo
+    -- тут надо доказать, что при вставке x в (scons y' ys' h') головой списка будет или x или y'
+    -- при этом y <= x из false, y <= y' из h
+  }
+
+-- кажется, что тут надо учитывать еще и длину списка, а то получается, что следующая строка тоже имеет право на существование
+--\func sort {A : TotalPoset} (xs : List A) : SortedList A => snil
+
+\func sort {A : TotalPoset} (xs : List A) : SortedList A \elim xs
+  | nil => snil
+  | cons x xs => insert'' x (sort xs)
+
+-- 4. Реализуйте функцию filter и докажите ее корректность, то есть, что выполнены следующие условияЖ
+--    * filter p xs является подсписком xs
+--    * Все элементы filter p xs удовлетворяют предикату p
+--    * Любой подсписок xs с тем же свойством является подсписком filter p xs
+--
+
