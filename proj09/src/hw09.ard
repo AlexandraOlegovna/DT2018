@@ -17,6 +17,7 @@
 
 \func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') => path (\lam i => f (p @ i))
 
+-- "Определить через Nat-leim" подразумевает, что нельзя использовать паттерн матчинг.
 \func +-assoc (n m k : Nat) : (n + m) + k = n + (m + k) \elim k
   | 0 => idp
   | suc k => pmap suc (Nat-elim (\lam k => n + m + k = n + (m + k)) idp (\lam _ x => pmap suc x) k)
