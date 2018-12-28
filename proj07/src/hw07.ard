@@ -124,9 +124,77 @@
 \data ModView (m n : Nat)
   | quot-rem (q r : Nat) (t : T (r < m)) (p : n = q * m + r)
 
-\func mod-view (m n : Nat) (t : T (0 < m)) : ModView m n => {?}
+\func +-assoc (x y z : Nat) : (x + y) + z = x + (y + z) \elim z
+  | zero => idp
+  | suc z => pmap suc (+-assoc x y z)
 
-\func div (n m : Nat) (t : T (0 < m)) : Nat => {?}
+\func +-comm (n m : Nat) : n + m = m + n
+  | 0, 0 => idp
+  | 0, suc m => pmap suc (+-comm 0 m)
+  | suc n, 0 => pmap suc (+-comm n 0)
+  | suc n, suc m => pmap suc (+-comm (suc n) m *> pmap suc (sym (+-comm n m)) *> +-comm n (suc m))
+
+\func \infixr 5 *> {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
+  => transport (\lam x => a = x) q p
+
+\func \infixr 5 <* {A : \Type} {a' a'' a : A} (q : a' = a) (p : a' = a'') : a = a''
+  => transport (\lam x => x = a'') q p
+
+\func pred (n : Nat) : Nat
+  | 0 => 0
+  | suc n => n
+
+\func lemma1 (x : Nat) : suc x = suc (0 + x)
+  | 0 => idp
+  | suc x => \let a => lemma1 x \in pmap suc a
+
+\func lemma2 (x : Nat) : 0 * x = 0
+  | 0 => idp
+  | suc x => lemma2 x
+
+\func lemma3 (q m : Nat) : q * m + q + m = (suc q) * m + q \elim m
+  | 0 => idp
+  | suc m => \let x => lemma3 q m \in \let a => pmap (\lam y => y + q) x \in
+    \let a2 => pmap suc ((lemma4 (q * m + q) m q) <* a) \in a2 *> lemma5 (suc q * m + q) q
+
+\func lemma4 (a b c : Nat) : (a + b) + c = (a + c) + b =>
+  -- a + (b + c) => a + (c + b) => (a + c) + b
+  (+-assoc a b c) *> (pmap (+ a) (+-comm b c)) *> (sym (+-assoc a c b))
+
+\func lemma5 (a b : Nat) : suc (a + b) = suc a + b \elim b
+  | 0 => idp
+  | suc b => pmap suc (lemma5 a b)
+
+\func lemma6 (r m : Nat) (p : T (r < suc m)) (q : suc r = suc m -> Empty) : T (r < m) \elim r, m
+  | 0, 0 => absurd (q idp)
+  | 0, suc m => p
+  | suc r, 0 => lemma7 r p
+  | suc r, suc m => lemma6 r m p (\lam p' => q (pmap suc p'))
+
+\func lemma7 (r : Nat) (p : T (r < 0)) : T false \elim r
+  | 0 => p
+  | suc r => p
+
+
+\func mod-view (m n : Nat) (t : T (0 < m)) : ModView m n \elim m, n
+  | 0, 0 => quot-rem 0 0 t idp
+  | 0, suc n => quot-rem 0 (suc n) t (lemma1 n)
+  | suc m, 0 => quot-rem 0 0 t (sym (lemma2 m))
+  | suc m, suc n => \case mod-view (suc m) n t \with {
+    | quot-rem q' r' t' p' => \case NatEq.decideEq (suc r') (suc m) \with {
+      | yes a => quot-rem (suc q') 0 t (pmap suc (
+        \let x1 => pmap (pred) a \in
+        \let x2 => pmap (\lam x => q' * m + q' + x) x1 \in
+                  (trans p' x2) *> (lemma3 q' m)
+      ))
+      | no a => quot-rem q' (suc r') (lemma6 r' m t' a) (pmap suc p')
+    }
+  }
+
+\func div (n m : Nat) (t : T (0 < m)) : Nat =>
+  \case mod-view m n t \with {
+    | quot-rem q _ _ _ => q
+  }
 
 -- 7. Докажите, что функции FromBoolToDec и FromDecToBool взаимно обратны.
 
