@@ -135,7 +135,15 @@
 -- умножение матриц
 
 -- z ─ нейтральный элемент по сложению.
-\func matMul {A : \Type} (z : A) (add mul : A -> A -> A) (n m k : Nat) (M : Mat A n m) (N : Mat A m k) : Mat A n k => {?}
+\func matMul {A : \Type} (z : A) (add mul : A -> A -> A) (n m k : Nat) (M : Mat A n m) (N : Mat A m k) : Mat A n k =>
+  \let Nt => transpose N \in
+  map2 (\lam r =>
+      \let row => replicate2 r k \in
+      map2 (foldr2 add z) (matAdd mul k m row Nt)) M
+  \where
+    \func foldr2 {A B : \Type} {n : Nat} (f : A -> B -> B) (acc : B) (vs : Vec A n) : B \elim n, vs
+      | 0, _              => acc
+      | suc n, fcons v vs => f v (foldr2 f acc vs)
 
 -- 10. Определите тип CTree A n бинарных деревьев высоты ровно n, которые хранят элементы только во внутренних узлах, но не в листьях.
 --     Высота листа равна 0.
@@ -148,8 +156,13 @@
 -- 11. Определите тип Tree A n бинарных деревьев высоты не больше n, которые хранят элементы только во внутренних узлах, но не в листьях.
 --     Высота листа равна 0.
 
-\data Tree (A : \Type) (n : Nat)
+\data Tree (A : \Type) (n : Nat) \elim n
+  | _ => leaf'
+  | suc n => node' (Tree A n) A (Tree A n)
 
 -- определите функцию, возвращающую высоту дерева.
 
-\func height {A : \Type} (n : Nat) (t : Tree A n) : Fin (suc n) => {?}
+\func height {A : \Type} (n : Nat) (t : Tree A n) : Fin (suc n) \elim n, t
+  | _, leaf'  => fzero
+  | suc n, node' l _ r => fsuc (maxF (height n l) (height n r))
+  \where \func maxF {N : Nat} (a b : Fin N) : Fin N => if ((toNat a) < (toNat b)) b a
