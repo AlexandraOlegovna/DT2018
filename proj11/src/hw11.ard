@@ -54,7 +54,12 @@
 
 -- 4. Докажите, что Either не является утверждением в общем случаем.
 
-\func Either-isProp (p : \Pi {A B : \Type} (pA : isProp A) (pB : isProp B) -> isProp (Either A B)) : Empty => {?}
+\func T-absurd {A : \Type} (t : T false) : A
+
+\func Either-isProp (p : \Pi {A B : \Type} (pA : isProp A) (pB : isProp B) -> isProp (Either A B)) : Empty =>
+  T-absurd (transport (\lam e => T (isLeft e)) (p Unit-isProp Unit-isProp (inl unit) (inr unit)) tt)
+  \where
+    \func isLeft {A B : \Type} (e : Either A B): Bool | inl _ => true | inr _ => false
 
 -- 5. Докажите, что LessOrEq и LessOrEq' являются предикатами.
 
