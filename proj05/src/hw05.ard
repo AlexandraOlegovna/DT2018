@@ -69,7 +69,27 @@
 
 -- 3. Докажите, что vnil является нейтральным элементом для v++.
 
-\func vnil-rightId {A : \Type} {n : Nat} (xs : Vec A n) : transport (Vec A) (+-comm 0 n) (xs v++ vnil) = xs => {?}
+--\func v++-assoc {A : \Type} {n m k : Nat} (xs : Vec A n) (ys : Vec A m) (zs : Vec A k)
+--  : (xs v++ ys) v++ zs = transport (Vec A) (+-assoc k m n) (xs v++ (ys v++ zs)) \elim n, xs
+--  | 0, vnil => idp
+--  | suc n, vcons x xs => pmap (vcons x) (v++-assoc xs ys zs) *>
+--  J (\lam e (p : k + m + n = e) =>
+--      vcons x (transport (Vec A) p (xs v++ (ys v++ zs))) =
+--      transport (Vec A) (pmap suc p) (vcons x (xs v++ (ys v++ zs))))
+--    idp
+--    (+-assoc k m n)
+---- vcons x (transport (Vec A) (+-assoc k m n) (xs v++ (ys v++ zs))) =
+---- transport (Vec A) (pmap suc (+-assoc k m n)) (vcons x (xs v++ (ys v++ zs))
+
+
+\func vnil-rightId {A : \Type} {n : Nat} (xs : Vec A n) : transport (Vec A) (+-comm 0 n) (xs v++ vnil) = xs \elim n, xs
+  | 0, vnil => idp
+  | suc n, vcons x xs =>
+  J (\lam e (p : 0 + n = e) =>
+      transport (Vec A) (pmap suc p) (vcons x (xs v++ vnil)) =
+      vcons x (transport (Vec A) p (xs v++ vnil)))
+    idp
+    (+-comm 0 n) *> pmap (vcons x) (vnil-rightId xs)
 
 -- 4. Докажите, что 0 не равно suc x.
 
